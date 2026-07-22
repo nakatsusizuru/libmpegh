@@ -1,0 +1,47 @@
+name: Build libmpegh (Windows x64)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.8
+
+      - name: Configure CMake (Release + LC_LEVEL_4)
+        run: |
+          cmake -S . -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DLC_LEVEL_4=ON
+
+      - name: Build
+        run: cmake --build build --config Release --verbose
+
+      - name: Upload artifacts (Library + Executable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: libmpegh-windows-x64
+          path: |
+            build/Release/ia_mpeghd_lib.lib
+            build/Release/ia_mpeghd_testbench.exe
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Show build output
+        run: |
+          echo "=== Build Output Files ==="
+          dir build\Release
