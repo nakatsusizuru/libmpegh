@@ -15,33 +15,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup CMake
+      - name: Setup CMake + Ninja
         uses: lukka/get-cmake@latest
-        with:
-          cmakeVersion: 3.8
 
-      - name: Configure CMake (Release + LC_LEVEL_4)
+      - name: Setup MSVC Compiler
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure CMake (Ninja)
+        shell: pwsh
         run: |
           cmake -S . -B build `
-            -G "Visual Studio 17 2022" `
-            -A x64 `
+            -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
             -DLC_LEVEL_4=ON
 
       - name: Build
-        run: cmake --build build --config Release --verbose
+        shell: pwsh
+        run: cmake --build build --verbose
 
-      - name: Upload artifacts (Library + Executable)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: libmpegh-windows-x64
           path: |
-            build/Release/ia_mpeghd_lib.lib
-            build/Release/ia_mpeghd_testbench.exe
-          if-no-files-found: warn
-          retention-days: 30
+            build/ia_mpeghd_lib.lib
+            build/ia_mpeghd_testbench.exe
+          retention-days: 14
 
-      - name: Show build output
+      - name: List output files
+        shell: pwsh
         run: |
-          echo "=== Build Output Files ==="
-          dir build\Release
+          echo "=== Build Output ==="
+          dir build
